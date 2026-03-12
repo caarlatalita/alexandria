@@ -39,4 +39,13 @@ public class PublisherService {
 
     return publisherRepository.save(publisherToUpdate);
   }
+
+  public Publisher deleteById(Long id) {
+    Publisher publisherToDelete = publisherRepository.findById(id)
+        .orElseThrow(() -> new PublisherNotFoundException(id));
+
+    publisherRepository.delete(publisherToDelete);
+
+    return publisherToDelete;
+  }
 }
