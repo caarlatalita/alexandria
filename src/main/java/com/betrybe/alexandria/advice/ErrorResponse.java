@@ -1,4 +1,4 @@
-package com.betrybe.alexandria.exception;
+package com.betrybe.alexandria.advice;
 
 import java.time.LocalDateTime;
 
