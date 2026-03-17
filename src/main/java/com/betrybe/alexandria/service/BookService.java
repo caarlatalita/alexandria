@@ -92,4 +92,13 @@ public class BookService {
     return bookDetailRepository.save(bookDetailFromDb);
 
   }
+
+  public BookDetail removeBookDetail(Long bookId) {
+    BookDetail bookToRemove = getBookDetail(bookId);
+
+    bookDetailRepository.delete(bookToRemove);
+
+    return bookToRemove;
+
+  }
 }
