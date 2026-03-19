@@ -1,9 +1,11 @@
 package com.betrybe.alexandria.service;
 
+import com.betrybe.alexandria.controller.dto.AuthorCreationDto;
 import com.betrybe.alexandria.entity.Author;
 import com.betrybe.alexandria.entity.AuthorBooks;
 import com.betrybe.alexandria.entity.Book;
 import com.betrybe.alexandria.exception.AuthorNotFoundException;
+import com.betrybe.alexandria.exception.EmptyAuthorListException;
 import com.betrybe.alexandria.repository.AuthorRepository;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +60,17 @@ public class AuthorService {
     return author.getAuthorBooks()
         .stream()
         .map(AuthorBooks::getBook)
+        .toList();
+  }
+
+  public List<Author> createBatch(List<AuthorCreationDto> authorsDto) {
+
+    java.util.Optional.ofNullable(authorsDto)
+        .filter(list -> !list.isEmpty())
+        .orElseThrow(EmptyAuthorListException::new);
+
+    return authorsDto.stream()
+        .map(dto -> create(dto.toEntity()))
         .toList();
   }
 

@@ -46,6 +46,16 @@ public class PublisherController {
         .body(PublisherDto.fromEntity(publisherService.create(publisherCreationDto.toEntity())));
   }
 
+  @PostMapping("/batch")
+  public ResponseEntity<List<PublisherDto>> createPublishers(
+      @RequestBody List<PublisherCreationDto> publisherCreationDto) {
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(publisherService.createBatch(publisherCreationDto)
+            .stream()
+            .map(PublisherDto::fromEntity)
+            .toList());
+  }
+
   @PutMapping("/{id}")
   public ResponseEntity<PublisherDto> updatePublisher(@PathVariable Long id,
       @RequestBody PublisherCreationDto publisherCreationDto) {

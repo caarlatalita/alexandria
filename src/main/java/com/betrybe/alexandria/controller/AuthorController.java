@@ -46,6 +46,17 @@ public class AuthorController {
 
   }
 
+  @PostMapping("/batch")
+  public ResponseEntity<List<AuthorDto>> createAuthors(
+      @RequestBody List<AuthorCreationDto> authorCreationDto) {
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(authorService.createBatch(authorCreationDto)
+            .stream()
+            .map(AuthorDto::fromEntity)
+            .toList());
+
+  }
+
   @PutMapping("/{id}")
   public ResponseEntity<AuthorDto> updateAuthor(@PathVariable Long id,
       @RequestBody AuthorCreationDto authorCreationDto) {

@@ -1,7 +1,9 @@
 package com.betrybe.alexandria.service;
 
+import com.betrybe.alexandria.controller.dto.PublisherCreationDto;
 import com.betrybe.alexandria.entity.Book;
 import com.betrybe.alexandria.entity.Publisher;
+import com.betrybe.alexandria.exception.EmptyPublisherListException;
 import com.betrybe.alexandria.exception.PublisherNotFoundException;
 import com.betrybe.alexandria.repository.PublisherRepository;
 import java.util.List;
@@ -30,6 +32,17 @@ public class PublisherService {
   public Publisher create(Publisher publisher) {
     return publisherRepository.save(publisher);
   }
+
+  public List<Publisher> createBatch(List<PublisherCreationDto> publishersCreationDto) {
+    java.util.Optional.ofNullable(publishersCreationDto)
+        .filter(list -> !list.isEmpty())
+        .orElseThrow(EmptyPublisherListException::new);
+
+    return publishersCreationDto.stream()
+        .map(dto -> create(dto.toEntity()))
+        .toList();
+  }
+
 
   public Publisher update(Long id, Publisher publisher) {
     Publisher publisherToUpdate = publisherRepository.findById(id)
