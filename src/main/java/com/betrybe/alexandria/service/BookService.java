@@ -103,6 +103,7 @@ public class BookService {
 
   }
 
+
   public void removeBookDetail(Long bookId) {
     BookDetail bookToRemove = getBookDetail(bookId);
 

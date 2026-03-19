@@ -5,6 +5,7 @@ import com.betrybe.alexandria.controller.dto.BookDetailCreationDto;
 import com.betrybe.alexandria.controller.dto.BookDetailDto;
 import com.betrybe.alexandria.controller.dto.BookDto;
 import com.betrybe.alexandria.service.BookService;
+import com.betrybe.alexandria.service.PublisherService;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,10 +25,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class BookController {
 
   private final BookService bookService;
+  private final PublisherService publisherService;
 
   @Autowired
-  public BookController(BookService bookService) {
+  public BookController(BookService bookService, PublisherService publisherService) {
     this.bookService = bookService;
+    this.publisherService = publisherService;
   }
 
   @GetMapping("/{id}")
@@ -44,14 +47,14 @@ public class BookController {
   public ResponseEntity<BookDto> createBook(@RequestBody BookCreationDto bookCreationDto) {
     return ResponseEntity
         .status(HttpStatus.CREATED)
-        .body(BookDto.fromEntity(bookService.create(bookCreationDto.toEntity())));
+        .body(BookDto.fromEntity(bookService.create(bookCreationDto.toEntity(publisherService))));
   }
 
   @PutMapping("/{id}")
   public ResponseEntity<BookDto> updateBook(@PathVariable Long id,
       @RequestBody BookCreationDto bookCreationDto) {
     return ResponseEntity.ok(
-        BookDto.fromEntity(bookService.update(id, bookCreationDto.toEntity())));
+        BookDto.fromEntity(bookService.update(id, bookCreationDto.toEntity(publisherService))));
 
   }
 
@@ -88,4 +91,5 @@ public class BookController {
     bookService.removeBookDetail(bookId);
     return ResponseEntity.noContent().build();
   }
+
 }
