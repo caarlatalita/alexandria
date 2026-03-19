@@ -7,6 +7,7 @@ import com.betrybe.alexandria.service.AuthorService;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,31 +30,33 @@ public class AuthorController {
   }
 
   @GetMapping("/{id}")
-  public AuthorDto getAuthorById(@PathVariable Long id) {
-    return AuthorDto.fromEntity(authorService.findById(id));
+  public ResponseEntity<AuthorDto> getAuthorById(@PathVariable Long id) {
+    return ResponseEntity.ok(AuthorDto.fromEntity(authorService.findById(id)));
   }
 
   @GetMapping
-  public List<AuthorDto> getAllAuthors() {
-    return authorService.findAll().stream().map(AuthorDto::fromEntity).toList();
+  public ResponseEntity<List<AuthorDto>> getAllAuthors() {
+    return ResponseEntity.ok(authorService.findAll().stream().map(AuthorDto::fromEntity).toList());
   }
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
-  public AuthorDto createAuthor(@RequestBody AuthorCreationDto authorCreationDto) {
-    return AuthorDto.fromEntity(authorService.create(authorCreationDto.toEntity()));
+  public ResponseEntity<AuthorDto> createAuthor(@RequestBody AuthorCreationDto authorCreationDto) {
+    return ResponseEntity.ok(
+        AuthorDto.fromEntity(authorService.create(authorCreationDto.toEntity())));
 
   }
 
   @PutMapping("/{id}")
-  public AuthorDto updateAuthor(@PathVariable Long id,
+  public ResponseEntity<AuthorDto> updateAuthor(@PathVariable Long id,
       @RequestBody AuthorCreationDto authorCreationDto) {
-    return AuthorDto.fromEntity(authorService.update(id, authorCreationDto.toEntity()));
+    return ResponseEntity.ok(
+        AuthorDto.fromEntity(authorService.update(id, authorCreationDto.toEntity())));
   }
 
   @DeleteMapping("/{id}")
-  public AuthorDto deleteAuthorById(@PathVariable Long id) {
-    return AuthorDto.fromEntity(authorService.deleteById(id));
+  public ResponseEntity<AuthorDto> deleteAuthorById(@PathVariable Long id) {
+    return ResponseEntity.ok(AuthorDto.fromEntity(authorService.deleteById(id)));
   }
 
 }
