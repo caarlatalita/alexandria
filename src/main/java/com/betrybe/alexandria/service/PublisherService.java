@@ -1,5 +1,6 @@
 package com.betrybe.alexandria.service;
 
+import com.betrybe.alexandria.entity.Book;
 import com.betrybe.alexandria.entity.Publisher;
 import com.betrybe.alexandria.exception.PublisherNotFoundException;
 import com.betrybe.alexandria.repository.PublisherRepository;
@@ -40,12 +41,22 @@ public class PublisherService {
     return publisherRepository.save(publisherToUpdate);
   }
 
-  public Publisher deleteById(Long id) {
+  public void deleteById(Long id) {
     Publisher publisherToDelete = publisherRepository.findById(id)
         .orElseThrow(() -> new PublisherNotFoundException(id));
 
     publisherRepository.delete(publisherToDelete);
 
-    return publisherToDelete;
   }
+
+  public List<Book> getPublisherBooks(Long publisherId) {
+    Publisher publisher = findById(publisherId);
+
+    if (publisher.getBooks() == null || publisher.getBooks().isEmpty()) {
+      return List.of();
+    }
+
+    return publisher.getBooks();
+  }
+
 }

@@ -1,6 +1,8 @@
 package com.betrybe.alexandria.service;
 
 import com.betrybe.alexandria.entity.Author;
+import com.betrybe.alexandria.entity.AuthorBooks;
+import com.betrybe.alexandria.entity.Book;
 import com.betrybe.alexandria.exception.AuthorNotFoundException;
 import com.betrybe.alexandria.repository.AuthorRepository;
 import java.util.List;
@@ -40,12 +42,23 @@ public class AuthorService {
     return authorRepository.save(authorToUpdate);
   }
 
-  public Author deleteById(Long id) {
+  public void deleteById(Long id) {
     Author authorToDelete = authorRepository.findById(id)
         .orElseThrow(() -> new AuthorNotFoundException(id));
-
     authorRepository.delete(authorToDelete);
-
-    return authorToDelete;
   }
+
+  public List<Book> getAuthorBooks(Long authorId) {
+    Author author = findById(authorId);
+
+    if (author.getAuthorBooks() == null || author.getAuthorBooks().isEmpty()) {
+      return List.of();
+    }
+
+    return author.getAuthorBooks()
+        .stream()
+        .map(AuthorBooks::getBook)
+        .toList();
+  }
+
 }

@@ -1,5 +1,6 @@
 package com.betrybe.alexandria.controller;
 
+import com.betrybe.alexandria.controller.dto.BookDto;
 import com.betrybe.alexandria.controller.dto.PublisherCreationDto;
 import com.betrybe.alexandria.controller.dto.PublisherDto;
 import com.betrybe.alexandria.service.PublisherService;
@@ -58,6 +59,15 @@ public class PublisherController {
     publisherService.deleteById(id);
     return ResponseEntity.noContent().build();
 
+  }
+
+  @GetMapping("/{publisherId}/books")
+  public ResponseEntity<List<BookDto>> getPublisherBooks(@PathVariable Long publisherId) {
+    return ResponseEntity.ok(
+        publisherService.getPublisherBooks(publisherId)
+            .stream()
+            .map(BookDto::fromEntity)
+            .toList());
   }
 
 }

@@ -3,6 +3,7 @@ package com.betrybe.alexandria.controller;
 
 import com.betrybe.alexandria.controller.dto.AuthorCreationDto;
 import com.betrybe.alexandria.controller.dto.AuthorDto;
+import com.betrybe.alexandria.controller.dto.BookDto;
 import com.betrybe.alexandria.service.AuthorService;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +16,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -57,6 +57,15 @@ public class AuthorController {
   public ResponseEntity<Void> deleteAuthorById(@PathVariable Long id) {
     authorService.deleteById(id);
     return ResponseEntity.noContent().build();
+  }
+
+  @GetMapping("/{authorId}/books")
+  public ResponseEntity<List<BookDto>> getAuthorBooks(@PathVariable Long authorId) {
+    return ResponseEntity.ok(
+        authorService.getAuthorBooks(authorId)
+            .stream()
+            .map(BookDto::fromEntity)
+            .toList());
   }
 
 }

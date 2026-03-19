@@ -7,7 +7,6 @@ import com.betrybe.alexandria.exception.BookNotFoundException;
 import com.betrybe.alexandria.repository.BookDetailRepository;
 import com.betrybe.alexandria.repository.BookRepository;
 import java.util.List;
-import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,11 +15,14 @@ public class BookService {
 
   private final BookRepository bookRepository;
   private final BookDetailRepository bookDetailRepository;
+  private final PublisherService publisherService;
 
   @Autowired
-  public BookService(BookRepository bookRepository, BookDetailRepository bookDetailRepository) {
+  public BookService(BookRepository bookRepository, BookDetailRepository bookDetailRepository,
+      PublisherService publisherService) {
     this.bookRepository = bookRepository;
     this.bookDetailRepository = bookDetailRepository;
+    this.publisherService = publisherService;
   }
 
   public Book findById(Long id) {
@@ -40,19 +42,28 @@ public class BookService {
     Book bookToUpdate = bookRepository.findById(id)
         .orElseThrow(() -> new BookNotFoundException(id));
 
-    bookToUpdate.setTitle(book.getTitle());
-    bookToUpdate.setGenre(book.getGenre());
+    if (book.getTitle() != null) {
+      bookToUpdate.setTitle(book.getTitle());
+    }
+
+    if (book.getGenre() != null) {
+      bookToUpdate.setGenre(book.getGenre());
+    }
+
+    if (book.getPublisher() != null) {
+      publisherService.findById(book.getPublisher().getId());
+      bookToUpdate.setPublisher(book.getPublisher());
+    }
 
     return bookRepository.save(bookToUpdate);
   }
 
-  public Book deleteById(Long id) {
+
+  public void deleteById(Long id) {
     Book bookToDelete = bookRepository.findById(id)
         .orElseThrow(() -> new BookNotFoundException(id));
 
     bookRepository.delete(bookToDelete);
-
-    return bookToDelete;
 
   }
 
@@ -77,7 +88,6 @@ public class BookService {
     }
 
     return bookDetail;
-
   }
 
   public BookDetail updateBookDetail(Long bookId, BookDetail bookDetail) {
@@ -93,12 +103,10 @@ public class BookService {
 
   }
 
-  public BookDetail removeBookDetail(Long bookId) {
+  public void removeBookDetail(Long bookId) {
     BookDetail bookToRemove = getBookDetail(bookId);
 
     bookDetailRepository.delete(bookToRemove);
-
-    return bookToRemove;
 
   }
 }
