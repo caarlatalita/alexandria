@@ -40,11 +40,10 @@ public class PublisherController {
   }
 
   @PostMapping
-  @ResponseStatus(HttpStatus.CREATED)
   public ResponseEntity<PublisherDto> createPublisher(
       @RequestBody PublisherCreationDto publisherCreationDto) {
-    return ResponseEntity.ok(
-        PublisherDto.fromEntity(publisherService.create(publisherCreationDto.toEntity())));
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(PublisherDto.fromEntity(publisherService.create(publisherCreationDto.toEntity())));
   }
 
   @PutMapping("/{id}")
@@ -55,8 +54,9 @@ public class PublisherController {
   }
 
   @DeleteMapping("/{id}")
-  public ResponseEntity<PublisherDto> deletePublisherById(@PathVariable Long id) {
-    return ResponseEntity.ok(PublisherDto.fromEntity((publisherService.deleteById(id))));
+  public ResponseEntity<Void> deletePublisherById(@PathVariable Long id) {
+    publisherService.deleteById(id);
+    return ResponseEntity.noContent().build();
 
   }
 

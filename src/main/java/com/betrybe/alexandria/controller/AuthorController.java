@@ -40,10 +40,9 @@ public class AuthorController {
   }
 
   @PostMapping
-  @ResponseStatus(HttpStatus.CREATED)
   public ResponseEntity<AuthorDto> createAuthor(@RequestBody AuthorCreationDto authorCreationDto) {
-    return ResponseEntity.ok(
-        AuthorDto.fromEntity(authorService.create(authorCreationDto.toEntity())));
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(AuthorDto.fromEntity(authorService.create(authorCreationDto.toEntity())));
 
   }
 
@@ -55,8 +54,9 @@ public class AuthorController {
   }
 
   @DeleteMapping("/{id}")
-  public ResponseEntity<AuthorDto> deleteAuthorById(@PathVariable Long id) {
-    return ResponseEntity.ok(AuthorDto.fromEntity(authorService.deleteById(id)));
+  public ResponseEntity<Void> deleteAuthorById(@PathVariable Long id) {
+    authorService.deleteById(id);
+    return ResponseEntity.noContent().build();
   }
 
 }

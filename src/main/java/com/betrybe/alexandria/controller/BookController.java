@@ -41,10 +41,10 @@ public class BookController {
   }
 
   @PostMapping
-  @ResponseStatus(HttpStatus.CREATED)
   public ResponseEntity<BookDto> createBook(@RequestBody BookCreationDto bookCreationDto) {
-    return ResponseEntity.ok(BookDto.fromEntity(bookService.create(bookCreationDto.toEntity())));
-
+    return ResponseEntity
+        .status(HttpStatus.CREATED)
+        .body(BookDto.fromEntity(bookService.create(bookCreationDto.toEntity())));
   }
 
   @PutMapping("/{id}")
@@ -56,29 +56,36 @@ public class BookController {
   }
 
   @DeleteMapping("/{id}")
-  public ResponseEntity<BookDto> deleteBookById(@PathVariable Long id) {
-    return ResponseEntity.ok(BookDto.fromEntity(bookService.deleteById(id)));
+  public ResponseEntity<Void> deleteBookById(@PathVariable Long id) {
+    bookService.deleteById(id);
+    return ResponseEntity.noContent().build();
   }
 
-  @PostMapping("/{bookId}/details")
+  @PostMapping("/{bookId}/detail")
   public ResponseEntity<BookDetailDto> createBookDetail(@PathVariable Long bookId,
       @RequestBody BookDetailCreationDto bookDetailDto) {
-    return ResponseEntity.ok(BookDetailDto.fromEntity(bookService.createBookDetail(bookId,
-        bookDetailDto.toEntity(bookService.findById(bookId)))));
+    return ResponseEntity
+        .status(HttpStatus.CREATED)
+        .body(BookDetailDto.fromEntity(bookService.createBookDetail(bookId,
+            bookDetailDto.toEntity(bookService.findById(bookId)))));
   }
 
+  @GetMapping("/{bookId}/detail")
   public ResponseEntity<BookDetailDto> getBookDetail(@PathVariable Long bookId) {
     return ResponseEntity.ok(BookDetailDto.fromEntity(bookService.getBookDetail(bookId)));
 
   }
 
+  @PutMapping("/{bookId}/detail")
   public ResponseEntity<BookDetailDto> updateBookDetail(@PathVariable Long bookId,
       @RequestBody BookDetailCreationDto bookDetailDto) {
     return ResponseEntity.ok(BookDetailDto.fromEntity(bookService.updateBookDetail(bookId,
         bookDetailDto.toEntity(bookService.findById(bookId)))));
   }
 
-  public ResponseEntity<BookDetailDto> removeBookDetail(@PathVariable Long bookId) {
-    return ResponseEntity.ok(BookDetailDto.fromEntity(bookService.removeBookDetail(bookId)));
+  @DeleteMapping("/{bookId}/detail")
+  public ResponseEntity<Void> removeBookDetail(@PathVariable Long bookId) {
+    bookService.removeBookDetail(bookId);
+    return ResponseEntity.noContent().build();
   }
 }
