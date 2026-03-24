@@ -9,6 +9,8 @@ import com.betrybe.alexandria.exception.EmptyAuthorListException;
 import com.betrybe.alexandria.repository.AuthorRepository;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -26,12 +28,23 @@ public class AuthorService {
         .orElseThrow(() -> new AuthorNotFoundException(id));
   }
 
-  public List<Author> findAll() {
-    return authorRepository.findAll();
+  public Page<Author> findAll(Pageable pageable) {
+    return authorRepository.findAll(pageable);
   }
 
   public Author create(Author author) {
     return authorRepository.save(author);
+  }
+
+  public List<Author> createBatch(List<AuthorCreationDto> authorsDto) {
+
+    java.util.Optional.ofNullable(authorsDto)
+        .filter(list -> !list.isEmpty())
+        .orElseThrow(EmptyAuthorListException::new);
+
+    return authorsDto.stream()
+        .map(dto -> create(dto.toEntity()))
+        .toList();
   }
 
   public Author update(Long id, Author author) {
@@ -60,17 +73,6 @@ public class AuthorService {
     return author.getAuthorBooks()
         .stream()
         .map(AuthorBooks::getBook)
-        .toList();
-  }
-
-  public List<Author> createBatch(List<AuthorCreationDto> authorsDto) {
-
-    java.util.Optional.ofNullable(authorsDto)
-        .filter(list -> !list.isEmpty())
-        .orElseThrow(EmptyAuthorListException::new);
-
-    return authorsDto.stream()
-        .map(dto -> create(dto.toEntity()))
         .toList();
   }
 

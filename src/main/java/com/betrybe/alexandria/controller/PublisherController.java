@@ -6,6 +6,8 @@ import com.betrybe.alexandria.controller.dto.PublisherDto;
 import com.betrybe.alexandria.service.PublisherService;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -34,9 +36,9 @@ public class PublisherController {
   }
 
   @GetMapping
-  public ResponseEntity<List<PublisherDto>> getAllPublishers() {
-    return ResponseEntity.ok(
-        publisherService.findAll().stream().map(PublisherDto::fromEntity).toList());
+  public ResponseEntity<Page<PublisherDto>> getAllPublishers(Pageable pageable) {
+    return ResponseEntity.ok(publisherService.findAll(pageable)
+        .map(PublisherDto::fromEntity));
   }
 
   @PostMapping

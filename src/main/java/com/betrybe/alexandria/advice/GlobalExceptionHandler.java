@@ -3,6 +3,7 @@ package com.betrybe.alexandria.advice;
 import com.betrybe.alexandria.exception.AuthorNotFoundException;
 import com.betrybe.alexandria.exception.BookDetailNotFoundException;
 import com.betrybe.alexandria.exception.BookNotFoundException;
+import com.betrybe.alexandria.exception.EmptyBookListException;
 import com.betrybe.alexandria.exception.EmptyPublisherListException;
 import com.betrybe.alexandria.exception.PublisherNotFoundException;
 import com.betrybe.alexandria.exception.EmptyAuthorListException;
@@ -60,6 +61,14 @@ public class GlobalExceptionHandler {
     return ResponseEntity
         .status(HttpStatus.BAD_REQUEST)
         .body(new ErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST.value()));
+  }
+
+  @ExceptionHandler(EmptyBookListException.class)
+  public ResponseEntity<EmptyBookListException> handleEmptyBookListException(
+      EmptyBookListException ex) {
+    return ResponseEntity
+        .status(HttpStatus.BAD_REQUEST)
+        .body(ex);
   }
 
 }

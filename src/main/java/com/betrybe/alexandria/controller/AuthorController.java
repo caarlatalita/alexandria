@@ -7,6 +7,8 @@ import com.betrybe.alexandria.controller.dto.BookDto;
 import com.betrybe.alexandria.service.AuthorService;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -35,8 +37,11 @@ public class AuthorController {
   }
 
   @GetMapping
-  public ResponseEntity<List<AuthorDto>> getAllAuthors() {
-    return ResponseEntity.ok(authorService.findAll().stream().map(AuthorDto::fromEntity).toList());
+  public ResponseEntity<Page<AuthorDto>> getAllAuthors(Pageable pageable) {
+    Page<AuthorDto> authors = authorService.findAll(pageable)
+        .map(AuthorDto::fromEntity);
+
+    return ResponseEntity.ok(authors);
   }
 
   @PostMapping

@@ -8,6 +8,8 @@ import com.betrybe.alexandria.exception.PublisherNotFoundException;
 import com.betrybe.alexandria.repository.PublisherRepository;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -25,9 +27,10 @@ public class PublisherService {
         .orElseThrow(() -> new PublisherNotFoundException(id));
   }
 
-  public List<Publisher> findAll() {
-    return publisherRepository.findAll();
+  public Page<Publisher> findAll(Pageable pageable) {
+    return publisherRepository.findAll(pageable);
   }
+
 
   public Publisher create(Publisher publisher) {
     return publisherRepository.save(publisher);

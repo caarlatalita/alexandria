@@ -1,13 +1,17 @@
 package com.betrybe.alexandria.service;
 
+import com.betrybe.alexandria.controller.dto.BookCreationDto;
 import com.betrybe.alexandria.entity.Book;
 import com.betrybe.alexandria.entity.BookDetail;
 import com.betrybe.alexandria.exception.BookDetailNotFoundException;
 import com.betrybe.alexandria.exception.BookNotFoundException;
+import com.betrybe.alexandria.exception.EmptyBookListException;
 import com.betrybe.alexandria.repository.BookDetailRepository;
 import com.betrybe.alexandria.repository.BookRepository;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -30,13 +34,24 @@ public class BookService {
         .orElseThrow(() -> new BookNotFoundException(id));
   }
 
-  public List<Book> findAll() {
-    return bookRepository.findAll();
+  public Page<Book> findAll(Pageable pageable) {
+    return bookRepository.findAll(pageable);
   }
 
   public Book create(Book book) {
     return bookRepository.save(book);
   }
+
+  public List<Book> createBatch(List<BookCreationDto> booksDto) {
+    java.util.Optional.ofNullable(booksDto)
+        .filter(list -> !list.isEmpty())
+        .orElseThrow(EmptyBookListException::new);
+
+    return booksDto.stream()
+        .map(dto -> create(dto.toEntity(publisherService)))
+        .toList();
+  }
+
 
   public Book update(Long id, Book book) {
     Book bookToUpdate = bookRepository.findById(id)
@@ -57,7 +72,6 @@ public class BookService {
 
     return bookRepository.save(bookToUpdate);
   }
-
 
   public void deleteById(Long id) {
     Book bookToDelete = bookRepository.findById(id)
@@ -103,11 +117,11 @@ public class BookService {
 
   }
 
-
   public void removeBookDetail(Long bookId) {
     BookDetail bookToRemove = getBookDetail(bookId);
 
     bookDetailRepository.delete(bookToRemove);
 
   }
+
 }

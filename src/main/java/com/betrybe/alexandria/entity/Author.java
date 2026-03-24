@@ -34,10 +34,6 @@ public class Author {
     return id;
   }
 
-  public void setId(Long id) {
-    this.id = id;
-  }
-
   public String getName() {
     return name;
   }
@@ -58,7 +54,7 @@ public class Author {
     return authorBooks;
   }
 
-  public void setAuthorBooks(List<AuthorBooks> authorBooks) {
+  private void setAuthorBooks(List<AuthorBooks> authorBooks) {
     this.authorBooks = authorBooks;
   }
 
