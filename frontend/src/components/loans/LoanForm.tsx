@@ -28,7 +28,7 @@ export function LoanForm({ bookId, bookTitle, onSubmit, onCancel }: LoanFormProp
         <p className="text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-lg">{bookTitle}</p>
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Destinatário *</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Mutuário *</label>
         <input
           value={form.borrowerName}
           onChange={(e) => setForm((p) => ({ ...p, borrowerName: e.target.value }))}
