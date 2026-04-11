@@ -19,6 +19,8 @@ interface AppState {
   removeToast: (id: number) => void;
 }
 
+let toastCounter = 0;
+
 export const useAppStore = create<AppState>((set) => ({
   books: [],
   loans: [],
@@ -34,7 +36,7 @@ export const useAppStore = create<AppState>((set) => ({
     }),
   addToast: (message, type = 'success') =>
     set((state) => ({
-      toasts: [...state.toasts, { id: Date.now(), message, type }],
+      toasts: [...state.toasts, { id: ++toastCounter, message, type }],
     })),
   removeToast: (id) =>
     set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) })),

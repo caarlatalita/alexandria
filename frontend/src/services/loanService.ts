@@ -26,8 +26,9 @@ export const loanService = {
 
   create(data: LoanFormData & { bookTitle: string }): Loan {
     const loans = getLoans();
+    const nextId = loans.reduce((max, l) => Math.max(max, l.id), 0) + 1;
     const newLoan: Loan = {
-      id: Date.now(),
+      id: nextId,
       bookId: data.bookId,
       bookTitle: data.bookTitle,
       borrowerName: data.borrowerName,
