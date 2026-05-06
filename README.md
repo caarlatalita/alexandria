@@ -1,15 +1,69 @@
 # Alexandria 📚
 
 [![Java](https://img.shields.io/badge/Java-17-orange)](https://openjdk.org/projects/jdk/17/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0-brightgreen)](https://spring.io/projects/spring-boot)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.3-brightgreen)](https://spring.io/projects/spring-boot)
 [![MySQL](https://img.shields.io/badge/MySQL-8.0-blue)](https://www.mysql.com/)
 [![JWT](https://img.shields.io/badge/JWT-JJWT%200.12.6-yellow)](https://github.com/jwtk/jjwt)
 [![Flyway](https://img.shields.io/badge/Flyway-Migrations-red)](https://flywaydb.org/)
 [![Architecture](https://img.shields.io/badge/Architecture-Hexagonal-blueviolet)](https://alistair.cockburn.us/hexagonal-architecture/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-> A REST API for personal digital libraries, built with **Hexagonal Architecture (Ports & Adapters)**.  
-> Integrates with external open-source/public domain book APIs, supports JWT authentication, and tracks reading progress across configurable states.
+> **Alexandria** is a REST API for personal digital libraries — import books from open-source/public domain catalogs, manage your reading list with a state machine, and track progress.  
+> Built with **Hexagonal Architecture (Ports & Adapters)**: the domain layer is pure Java with zero framework dependencies.
+
+---
+
+## Quick Start
+
+```bash
+git clone git@github.com:caarlatalita/alexandria.git
+cd alexandria
+docker-compose up -d          # MySQL 8.0 on :3306
+./mvnw spring-boot:run        # API at :8080
+```
+
+---
+
+## API Overview
+
+All endpoints return JSON. Authentication is required except `/auth/register` and `/auth/login`.
+
+### Authentication
+
+| Method | Endpoint | Body | Response |
+|--------|----------|------|----------|
+| `POST` | `/auth/register` | `{ "username", "firstName", "lastName", "email", "password" }` | `201` — user created |
+| `POST` | `/auth/login` | `{ "username", "password" }` | `200` — `{ "token", "userId", "username" }` |
+
+### Books
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/books` | List all books (paginated) |
+| `GET` | `/books/{id}` | Get book by ID |
+| `POST` | `/books` | Import books from external API (`{ "page": 1 }`) |
+| `PUT` | `/books/{id}` | Update book title |
+| `DELETE` | `/books/{id}` | Delete a book |
+| `GET` | `/books/search?query=` | Search books by title |
+
+### Personal Library (User-Books)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/user-books?status=` | List user's books (filterable by status) |
+| `POST` | `/user-books` | Add book to library (`{ "bookId", "status" }`) |
+| `PUT` | `/user-books/{id}` | Update status/progress/rating |
+| `DELETE` | `/user-books/{id}` | Remove book from library |
+
+### Reading State Machine
+
+```
+TOREAD ──→ READING ──→ DONE
+```
+
+- **TOREAD**: no extra fields required
+- **READING**: requires `progress` (0–100)
+- **DONE**: requires `rating` (0–10)
 
 ---
 
@@ -42,74 +96,23 @@ graph TB
     style Secondary fill:#ef9a9a,stroke:#b71c1c,color:#3e0808
 ```
 
-Dependencies point **inward**: controllers → use cases → ports (interfaces) → adapters.  
+Dependencies point **inward**: controllers → use cases → ports → adapters.  
 The domain layer imports **zero frameworks** — no Spring, no JPA, no HTTP libraries.
 
-### Design Decisions
-
-| Concern | Decision | Why |
-|---------|----------|-----|
-| **Dependency Injection** | Use cases receive ports via constructor in `BeanConfiguration` (no `@Service` in domain) | Domain never depends on Spring annotations |
-| **Persistence** | Repository pattern: domain defines interfaces, infrastructure implements with JPA | Swap database without touching business logic |
-| **External APIs** | `BookApiClient` port → adapters (ex.: Gutendex, Open Library, etc.) | Add new book sources via new adapter, domain unchanged |
-| **Object creation** | Static factory methods (`create` vs `restore`) | Prevents ID overwrites, centralizes validation |
-| **Validation** | Self-contained in domain entities (`UserBooks.validateByStatus()`) | Business rules live with the data they govern, not in services |
-
-### SOLID Principles
+### Design Highlights
 
 | Principle | How Alexandria Applies It |
 |-----------|---------------------------|
-| **S**ingle Responsibility | One use case class per operation (`CreateBookUseCase`, `DeleteBookUseCase`). Domain entities own their validation logic. |
-| **O**pen/Closed | New external book sources implement `BookApiClient`. Existing use cases and domain are untouched. |
-| **L**iskov Substitution | Every repository adapter conforms to its port contract. Swap implementations freely. |
-| **I**nterface Segregation | Four focused ports (`BookRepository`, `UserRepository`, `UserBooksRepository`, `BookApiClient`) instead of a monolith. |
-| **D**ependency Inversion | Domain owns the interfaces. Infrastructure implements them. `BeanConfiguration` wires the graph. |
+| **S**ingle Responsibility | One use case class per operation (`CreateBookUseCase`, `DeleteBookUseCase`). Entities own their validation. |
+| **O**pen/Closed | New book sources implement `BookApiClient`. Domain untouched. |
+| **L**iskov Substitution | Every adapter conforms to its port contract. Swap implementations freely. |
+| **I**nterface Segregation | Four focused ports instead of a monolith. |
+| **D**ependency Inversion | Domain owns the interfaces. Infrastructure implements them. |
 
----
-
-## Tech Stack
-
-| Category | Technologies |
-|----------|-------------|
-| **Language & Framework** | Java 17, Spring Boot 4.0, Maven |
-| **Persistence** | Spring Data JPA, MySQL 8, Flyway |
-| **Security** | Spring Security, JJWT 0.12.6, BCrypt |
-| **Infrastructure** | Docker Compose, Testcontainers |
-
----
-
-## Domain Model
-
-The domain consists of three aggregate roots and four value objects, all in `com.pucsp.alexandria.domain`.
-
-### Aggregates
-
-| Entity | Identity | Behavior |
-|--------|----------|----------|
-| **Book** | `BookId` (extends `Id<Long>`) | Factory methods: `createFromExternalApi()`, `createLocal()`, `restore()`. Immutable after construction. |
-| **User** | `UserId` (extends `Id<Long>`) | Factory methods: `create()`, `restore()`, `updateWith()`. Encapsulates password hashing at infrastructure level. |
-| **UserBooks** | Auto-generated `Long` | State machine: `TOREAD → READING → DONE`. `validateByStatus()` enforces field rules per state (progress for READING, rating for DONE). `updateWith()` returns new instance. |
-
-### Value Objects
-
-| Object | Validation | Usage |
-|--------|-----------|-------|
-| `Id<T>` (abstract) | Non-null, positive | Base class for `BookId`, `UserId` |
-| `Email` | Regex pattern, lowercased | Stored in `User` |
-| `BookSource` | Enum: `LOCAL`, `EXTERNAL` | Determines required fields per book type |
-| `UserBooksStatus` | Enum: `TOREAD`, `READING`, `DONE` | Controls progress/rating validation rules |
-
-### Creation vs Restoration
-
-```java
-// New entity — no ID assigned yet
-Book.createFromExternalApi(externalId, title, author, ...);
-
-// From persistence — ID must be provided
-Book.restore(id, title, author, externalId, ...);
-```
-
-This pattern prevents accidental ID overwrites and keeps construction logic centralized.
+Key architectural decisions:
+- **Explicit DI**: `BeanConfiguration` wires the graph manually — no `@Service` or `@Component` in domain/application layers.
+- **Static factory methods**: `createFromExternalApi()` vs `restore()` prevents ID overwrites and centralizes validation.
+- **Self-contained validation**: `UserBooks.validateByStatus()` lives in the domain entity, not in a service.
 
 ---
 
@@ -117,48 +120,27 @@ This pattern prevents accidental ID overwrites and keeps construction logic cent
 
 ```
 com.pucsp.alexandria/
-├── domain/               Pure Java. Entities, Port interfaces, Value Objects, Domain exceptions.
-├── application/          Use case classes + input/output DTOs. Depends only on domain.
+├── domain/               Pure Java. Entities, Ports, Value Objects, Domain exceptions.
+├── application/          Use cases + DTOs. Depends only on domain.
 ├── adapter/
 │   ├── in/rest/          @RestController classes (primary adapters).
-│   └── out/persistence/  JPA @Entity, Spring Data repositories, mappers, external API HTTP clients.
-├── config/               BeanConfiguration (explicit DI), SecurityConfig, JWT filter chain.
-└── advice/               GlobalExceptionHandler (@RestControllerAdvice).
+│   └── out/persistence/  JPA entities, repositories, mappers, external API clients.
+├── config/               BeanConfiguration, SecurityConfig, JWT filter chain.
+└── advice/               GlobalExceptionHandler.
 ```
 
-Key architectural rule: **no infrastructure dependency crosses into `domain/` or `application/`**.
+**Golden rule**: no infrastructure dependency crosses into `domain/` or `application/`.
 
 ---
 
-## Key Features
+## Tech Stack
 
-- **Multiple book sources** — external API (open-source/public domain books) and local creation.
-- **Personal library with state machine** — `TOREAD → READING → DONE` with per-state field validation.
-- **JWT authentication** — HMAC-SHA256 tokens, BCrypt password hashing, stateless sessions.
-- **Flyway migrations** — versioned schema changes, no manual DDL.
-- **Centralized error handling** — domain exceptions mapped to HTTP responses via `@RestControllerAdvice`.
-
----
-
-## Quick Start
-
-```bash
-git clone https://github.com/your-org/alexandria.git
-cd alexandria
-docker-compose up -d          # MySQL 8.0 on :3306
-./mvnw spring-boot:run        # API at :8080
-```
-
----
-
-## Why This Project Matters
-
-- **Clean Architecture** — `domain/` is pure Java 17. Zero Spring, JPA, or HTTP imports.
-- **Use case–driven** — each operation is a dedicated class; no monolithic services.
-- **Framework as adapter** — Spring Boot serves the domain, not the other way around.
-- **Integration by contract** — external book APIs behind a `BookApiClient` port; swap implementations without touching domain logic.
-- **Explicit dependency injection** — `BeanConfiguration` wires the graph manually. No `@Service` or `@Component` in domain or application layers.
-- **Rich domain model** — entities with factory methods, immutable value objects, self-contained state validation.
+| Category | Technologies |
+|----------|-------------|
+| **Core** | Java 17, Spring Boot 4.0.3, Maven |
+| **Persistence** | Spring Data JPA, MySQL 8, Flyway |
+| **Security** | Spring Security, JJWT 0.12.6, BCrypt |
+| **Infrastructure** | Docker Compose, Testcontainers |
 
 ---
 
