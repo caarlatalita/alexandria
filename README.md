@@ -9,7 +9,7 @@
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 > A REST API for personal digital libraries, built with **Hexagonal Architecture (Ports & Adapters)**.  
-> Integrates with Project Gutenberg via the Gutendex API, supports JWT authentication, and tracks reading progress across configurable states.
+> Integrates with external open-source/public domain book APIs, supports JWT authentication, and tracks reading progress across configurable states.
 
 ---
 
@@ -30,16 +30,16 @@ graph TB
     end
     subgraph Secondary["Secondary Adapters (outbound)"]
         DB[JPA / MySQL]
-        GUT[Gutendex HTTP Client]
+        EXT[External Book API Client]
     end
 
     RC --> UC --> P
-    P --> DB & GUT
+    P --> DB & EXT
 
-    style Domain fill:#fff3e0,stroke:#e65100,stroke-width:3px
-    style Application fill:#f3e5f5,stroke:#6a1b9a
-    style Primary fill:#e8f5e9,stroke:#2e7d32
-    style Secondary fill:#ffebee,stroke:#c62828
+    style Domain fill:#ffe0b2,stroke:#bf360c,stroke-width:3px,color:#3e2723
+    style Application fill:#ce93d8,stroke:#4a148c,color:#1a0d2e
+    style Primary fill:#81c784,stroke:#1b5e20,color:#0a2e0a
+    style Secondary fill:#ef9a9a,stroke:#b71c1c,color:#3e0808
 ```
 
 Dependencies point **inward**: controllers → use cases → ports (interfaces) → adapters.  
@@ -51,7 +51,7 @@ The domain layer imports **zero frameworks** — no Spring, no JPA, no HTTP libr
 |---------|----------|-----|
 | **Dependency Injection** | Use cases receive ports via constructor in `BeanConfiguration` (no `@Service` in domain) | Domain never depends on Spring annotations |
 | **Persistence** | Repository pattern: domain defines interfaces, infrastructure implements with JPA | Swap database without touching business logic |
-| **External APIs** | `BookApiClient` port → `GutendexClient` adapter | Add Google Books / Open Library via new adapter, domain unchanged |
+| **External APIs** | `BookApiClient` port → adapters (ex.: Gutendex, Open Library, etc.) | Add new book sources via new adapter, domain unchanged |
 | **Object creation** | Static factory methods (`create` vs `restore`) | Prevents ID overwrites, centralizes validation |
 | **Validation** | Self-contained in domain entities (`UserBooks.validateByStatus()`) | Business rules live with the data they govern, not in services |
 
@@ -60,7 +60,7 @@ The domain layer imports **zero frameworks** — no Spring, no JPA, no HTTP libr
 | Principle | How Alexandria Applies It |
 |-----------|---------------------------|
 | **S**ingle Responsibility | One use case class per operation (`CreateBookUseCase`, `DeleteBookUseCase`). Domain entities own their validation logic. |
-| **O**pen/Closed | New book sources implement `BookApiClient`. Existing use cases and domain are untouched. |
+| **O**pen/Closed | New external book sources implement `BookApiClient`. Existing use cases and domain are untouched. |
 | **L**iskov Substitution | Every repository adapter conforms to its port contract. Swap implementations freely. |
 | **I**nterface Segregation | Four focused ports (`BookRepository`, `UserRepository`, `UserBooksRepository`, `BookApiClient`) instead of a monolith. |
 | **D**ependency Inversion | Domain owns the interfaces. Infrastructure implements them. `BeanConfiguration` wires the graph. |
@@ -86,7 +86,7 @@ The domain consists of three aggregate roots and four value objects, all in `com
 
 | Entity | Identity | Behavior |
 |--------|----------|----------|
-| **Book** | `BookId` (extends `Id<Long>`) | Factory methods: `createFromGutendex()`, `createLocal()`, `restore()`. Immutable after construction. |
+| **Book** | `BookId` (extends `Id<Long>`) | Factory methods: `createFromExternalApi()`, `createLocal()`, `restore()`. Immutable after construction. |
 | **User** | `UserId` (extends `Id<Long>`) | Factory methods: `create()`, `restore()`, `updateWith()`. Encapsulates password hashing at infrastructure level. |
 | **UserBooks** | Auto-generated `Long` | State machine: `TOREAD → READING → DONE`. `validateByStatus()` enforces field rules per state (progress for READING, rating for DONE). `updateWith()` returns new instance. |
 
@@ -96,17 +96,17 @@ The domain consists of three aggregate roots and four value objects, all in `com
 |--------|-----------|-------|
 | `Id<T>` (abstract) | Non-null, positive | Base class for `BookId`, `UserId` |
 | `Email` | Regex pattern, lowercased | Stored in `User` |
-| `BookSource` | Enum: `LOCAL`, `GUTENDEX` | Determines required fields per book type |
+| `BookSource` | Enum: `LOCAL`, `EXTERNAL` | Determines required fields per book type |
 | `UserBooksStatus` | Enum: `TOREAD`, `READING`, `DONE` | Controls progress/rating validation rules |
 
 ### Creation vs Restoration
 
 ```java
 // New entity — no ID assigned yet
-Book.createFromGutendex(gutendexId, title, author, ...);
+Book.createFromExternalApi(externalId, title, author, ...);
 
 // From persistence — ID must be provided
-Book.restore(id, title, author, gutendexId, ...);
+Book.restore(id, title, author, externalId, ...);
 ```
 
 This pattern prevents accidental ID overwrites and keeps construction logic centralized.
@@ -121,7 +121,7 @@ com.pucsp.alexandria/
 ├── application/          Use case classes + input/output DTOs. Depends only on domain.
 ├── adapter/
 │   ├── in/rest/          @RestController classes (primary adapters).
-│   └── out/persistence/  JPA @Entity, Spring Data repositories, mappers, Gutendex HTTP client.
+│   └── out/persistence/  JPA @Entity, Spring Data repositories, mappers, external API HTTP clients.
 ├── config/               BeanConfiguration (explicit DI), SecurityConfig, JWT filter chain.
 └── advice/               GlobalExceptionHandler (@RestControllerAdvice).
 ```
@@ -132,7 +132,7 @@ Key architectural rule: **no infrastructure dependency crosses into `domain/` or
 
 ## Key Features
 
-- **Dual book sources** — Gutendex API (Portuguese public domain, paginated) and local creation.
+- **Multiple book sources** — external API (open-source/public domain books) and local creation.
 - **Personal library with state machine** — `TOREAD → READING → DONE` with per-state field validation.
 - **JWT authentication** — HMAC-SHA256 tokens, BCrypt password hashing, stateless sessions.
 - **Flyway migrations** — versioned schema changes, no manual DDL.
@@ -156,7 +156,7 @@ docker-compose up -d          # MySQL 8.0 on :3306
 - **Clean Architecture** — `domain/` is pure Java 17. Zero Spring, JPA, or HTTP imports.
 - **Use case–driven** — each operation is a dedicated class; no monolithic services.
 - **Framework as adapter** — Spring Boot serves the domain, not the other way around.
-- **Integration by contract** — Gutendex behind a `BookApiClient` port; swap implementations without touching domain logic.
+- **Integration by contract** — external book APIs behind a `BookApiClient` port; swap implementations without touching domain logic.
 - **Explicit dependency injection** — `BeanConfiguration` wires the graph manually. No `@Service` or `@Component` in domain or application layers.
 - **Rich domain model** — entities with factory methods, immutable value objects, self-contained state validation.
 
