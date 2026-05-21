@@ -1,12 +1,13 @@
 package com.pucsp.alexandria.advice;
 
 import com.pucsp.alexandria.domain.book.exception.BookNotFoundException;
+import com.pucsp.alexandria.domain.user.exception.DuplicateUserException;
+import com.pucsp.alexandria.domain.user.exception.InvalidCredentialsException;
 import com.pucsp.alexandria.domain.userbook.exception.DuplicateUserBooksException;
 import com.pucsp.alexandria.domain.userbook.exception.InvalidUserBooksException;
 import com.pucsp.alexandria.domain.userbook.exception.UserBooksNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -48,11 +49,18 @@ public class GlobalExceptionHandler {
         .body(new ErrorResponse(ex.getMessage(), HttpStatus.CONFLICT.value()));
   }
 
-  @ExceptionHandler(BadCredentialsException.class)
-  public ResponseEntity<ErrorResponse> handleBadCredentials(BadCredentialsException ex) {
+  @ExceptionHandler(DuplicateUserException.class)
+  public ResponseEntity<ErrorResponse> handleDuplicateUser(DuplicateUserException ex) {
+    return ResponseEntity
+        .status(HttpStatus.CONFLICT)
+        .body(new ErrorResponse(ex.getMessage(), HttpStatus.CONFLICT.value()));
+  }
+
+  @ExceptionHandler(InvalidCredentialsException.class)
+  public ResponseEntity<ErrorResponse> handleInvalidCredentials(InvalidCredentialsException ex) {
     return ResponseEntity
         .status(HttpStatus.UNAUTHORIZED)
-        .body(new ErrorResponse("Invalid username or password", HttpStatus.UNAUTHORIZED.value()));
+        .body(new ErrorResponse(ex.getMessage(), HttpStatus.UNAUTHORIZED.value()));
   }
 
   @ExceptionHandler(Exception.class)
